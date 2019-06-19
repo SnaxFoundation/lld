@@ -31,8 +31,8 @@
 
 #include <cstdarg>
 #include <map>
-#include <eosio/abimerge.hpp>
-#include <eosio/utils.hpp>
+#include <snax/abimerge.hpp>
+#include <snax/utils.hpp>
 
 #define DEBUG_TYPE "lld"
 
@@ -980,8 +980,8 @@ static StringRef getOutputDataSegmentName(StringRef Name) {
 
 void Writer::createOutputSegments() {
   for (ObjFile *File : Symtab->ObjectFiles) {
-    if (!File->getEosioABI().empty())
-       abis.push_back(File->getEosioABI());
+    if (!File->getSnaxABI().empty())
+       abis.push_back(File->getSnaxABI());
     for (InputSegment *Segment : File->Segments) {
       if (!Segment->Live)
         continue;
@@ -1008,9 +1008,9 @@ static constexpr int OPCODE_I64_EQ    = 0x51;
 static constexpr int OPCODE_I64_NE    = 0x52;
 static constexpr int OPCODE_I32_CONST = 0x41;
 static constexpr int OPCODE_I64_CONST = 0x42;
-static constexpr uint64_t EOSIO_COMPILER_ERROR_BASE = 8000000000000000000ull;
-static constexpr uint64_t EOSIO_ERROR_NO_ACTION     = EOSIO_COMPILER_ERROR_BASE;
-static constexpr uint64_t EOSIO_ERROR_ONERROR       = EOSIO_COMPILER_ERROR_BASE+1;
+static constexpr uint64_t SNAX_COMPILER_ERROR_BASE = 8000000000000000000ull;
+static constexpr uint64_t SNAX_ERROR_NO_ACTION     = SNAX_COMPILER_ERROR_BASE;
+static constexpr uint64_t SNAX_ERROR_ONERROR       = SNAX_COMPILER_ERROR_BASE+1;
 
 void Writer::createDispatchFunction() {
 
@@ -1030,7 +1030,7 @@ void Writer::createDispatchFunction() {
          writeU8(os, OPCODE_ELSE, "ELSE");
       }
       need_else = true;
-      uint64_t nm = eosio::cdt::string_to_name(str.substr(0, str.find(":")).c_str());
+      uint64_t nm = snax::cdt::string_to_name(str.substr(0, str.find(":")).c_str());
       writeU8(os, OPCODE_I64_CONST, "I64 CONST");
       encodeSLEB128((int64_t)nm, os);
       writeU8(os, OPCODE_GET_LOCAL, "GET_LOCAL");
@@ -1051,7 +1051,7 @@ void Writer::createDispatchFunction() {
          throw std::runtime_error("wasm_ld internal error function not found");
    };
 
-   auto assert_sym = (FunctionSymbol*)Symtab->find("eosio_assert_code");
+   auto assert_sym = (FunctionSymbol*)Symtab->find("snax_assert_code");
    uint32_t assert_idx = assert_sym->getFunctionIndex();
    auto post_sym = (FunctionSymbol*)Symtab->find("post_dispatch");
 
@@ -1063,8 +1063,8 @@ void Writer::createDispatchFunction() {
       std::set<StringRef> has_dispatched;
       bool need_else = false;
       for (ObjFile *File : Symtab->ObjectFiles) {
-        if (!File->getEosioActions().empty()) {
-            for (auto act : File->getEosioActions()) {
+        if (!File->getSnaxActions().empty()) {
+            for (auto act : File->getSnaxActions()) {
               if (has_dispatched.insert(act).second) {
                 create_if(OS, act.str(), need_else);
                 act_cnt++;
@@ -1075,20 +1075,20 @@ void Writer::createDispatchFunction() {
       if (act_cnt > 0)
         writeU8(OS, OPCODE_ELSE, "ELSE");
 
-      // do not fail if self == eosio
+      // do not fail if self == snax
       writeU8(OS, OPCODE_GET_LOCAL, "GET_LOCAL");
       writeUleb128(OS, 0, "self");
       writeU8(OS, OPCODE_I64_CONST, "I64.CONST");
-      encodeSLEB128((int64_t)eosio::cdt::string_to_name("eosio"), OS);
+      encodeSLEB128((int64_t)snax::cdt::string_to_name("snax"), OS);
       writeU8(OS, OPCODE_I64_NE, "I64.NE");
-      writeU8(OS, OPCODE_IF, "if receiver != eosio");
+      writeU8(OS, OPCODE_IF, "if receiver != snax");
       writeU8(OS, 0x40, "none");
 
       // assert that no action was found
       writeU8(OS, OPCODE_I32_CONST, "I32.CONST");
       writeUleb128(OS, 0, "false");
       writeU8(OS, OPCODE_I64_CONST, "I64.CONST");
-      writeUleb128(OS, EOSIO_ERROR_NO_ACTION, "error code");
+      writeUleb128(OS, SNAX_ERROR_NO_ACTION, "error code");
       writeU8(OS, OPCODE_CALL, "CALL");
       writeUleb128(OS, assert_idx, "code");
 
@@ -1117,8 +1117,8 @@ void Writer::createDispatchFunction() {
       std::set<StringRef> has_dispatched;
       std::map<std::string, std::vector<std::string>> notify_handlers;
       for (ObjFile *File : Symtab->ObjectFiles) {
-         if (!File->getEosioNotify().empty()) {
-            for (auto notif : File->getEosioNotify()) {
+         if (!File->getSnaxNotify().empty()) {
+            for (auto notif : File->getSnaxNotify()) {
               if (has_dispatched.insert(notif).second) {
                 not_cnt++;
                 std::string snotif = notif.str();
@@ -1135,17 +1135,17 @@ void Writer::createDispatchFunction() {
       writeU8(OS, OPCODE_GET_LOCAL, "GET_LOCAL");
       writeUleb128(OS, 0, "self");
       writeU8(OS, OPCODE_I64_CONST, "I64.CONST");
-      encodeSLEB128((int64_t)eosio::cdt::string_to_name("eosio"), OS);
+      encodeSLEB128((int64_t)snax::cdt::string_to_name("snax"), OS);
       writeU8(OS, OPCODE_I64_NE, "I64.NE");
-      writeU8(OS, OPCODE_IF, "if receiver != eosio");
+      writeU8(OS, OPCODE_IF, "if receiver != snax");
       writeU8(OS, 0x40, "none");
       
       // check for onerror first
       bool has_onerror_handler = false;
       if (not_cnt > 0) {
          for (auto const& notif0 : notify_handlers) {
-            uint64_t nm = eosio::cdt::string_to_name(notif0.first.c_str());
-            if (notif0.first == "eosio")
+            uint64_t nm = snax::cdt::string_to_name(notif0.first.c_str());
+            if (notif0.first == "snax")
                for (auto const& notif1 : notif0.second)
                   if (notif1 == "onerror")
                      has_onerror_handler = true;
@@ -1155,16 +1155,16 @@ void Writer::createDispatchFunction() {
       if (!has_onerror_handler) {
          // assert on onerror
          writeU8(OS, OPCODE_I64_CONST, "I64.CONST");
-         uint64_t acnt = eosio::cdt::string_to_name("eosio");
+         uint64_t acnt = snax::cdt::string_to_name("snax");
          encodeSLEB128((int64_t)acnt, OS);
          writeU8(OS, OPCODE_GET_LOCAL, "GET_LOCAL");
          writeUleb128(OS, 1, "code");
          writeU8(OS, OPCODE_I64_EQ, "I64.EQ");
-         writeU8(OS, OPCODE_IF, "IF code == eosio");
+         writeU8(OS, OPCODE_IF, "IF code == snax");
          writeU8(OS, 0x40, "none");
 
          writeU8(OS, OPCODE_I64_CONST, "I64.CONST");
-         uint64_t nm = eosio::cdt::string_to_name("onerror");
+         uint64_t nm = snax::cdt::string_to_name("onerror");
          encodeSLEB128((int64_t)nm, OS);
          writeU8(OS, OPCODE_GET_LOCAL, "GET_LOCAL");
          writeUleb128(OS, 2, "action");
@@ -1174,7 +1174,7 @@ void Writer::createDispatchFunction() {
          writeU8(OS, OPCODE_I32_CONST, "I32.CONST");
          writeUleb128(OS, 0, "false");
          writeU8(OS, OPCODE_I64_CONST, "I64.CONST");
-         writeUleb128(OS, EOSIO_ERROR_ONERROR, "error code");
+         writeUleb128(OS, SNAX_ERROR_ONERROR, "error code");
          writeU8(OS, OPCODE_CALL, "CALL");
          writeUleb128(OS, assert_idx, "code");
          writeU8(OS, OPCODE_END, "END");
@@ -1185,7 +1185,7 @@ void Writer::createDispatchFunction() {
       bool notify0_need_else = false;
       if (not_cnt > 0) {
          for (auto const& notif0 : notify_handlers) {
-            uint64_t nm = eosio::cdt::string_to_name(notif0.first.c_str());
+            uint64_t nm = snax::cdt::string_to_name(notif0.first.c_str());
             if (notif0.first == "*")
                continue;
             if (notify0_need_else)
