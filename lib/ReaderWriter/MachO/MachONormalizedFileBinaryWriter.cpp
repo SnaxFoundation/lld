@@ -415,7 +415,7 @@ uint32_t MachOFileLayout::loadCommandsSize(uint32_t &count) {
     ++count;
   }
 
-  // Add LC_VERSION_MIN_MACOSX, LC_VERSION_MIN_IPHONSNAX, LC_VERSION_MIN_WATCHOS,
+  // Add LC_VERSION_MIN_MACOSX, LC_VERSION_MIN_IPHONEOS, LC_VERSION_MIN_WATCHOS,
   // LC_VERSION_MIN_TVOS
   if (_file.hasMinVersionLoadCommand) {
     size += sizeof(version_min_command);
@@ -751,7 +751,7 @@ static void writeVersionMinLoadCommand(const NormalizedFile &_file,
       break;
     case MachOLinkingContext::OS::iOS:
     case MachOLinkingContext::OS::iOS_simulator:
-      vm->cmd     = LC_VERSION_MIN_IPHONSNAX;
+      vm->cmd     = LC_VERSION_MIN_IPHONEOS;
       vm->cmdsize = sizeof(version_min_command);
       vm->version = _file.minOSverson;
       vm->sdk     = _file.sdkVersion;
@@ -786,7 +786,7 @@ llvm::Error MachOFileLayout::writeLoadCommands() {
       swapStruct(*st);
     lc += sizeof(symtab_command);
 
-    // Add LC_VERSION_MIN_MACOSX, LC_VERSION_MIN_IPHONSNAX,
+    // Add LC_VERSION_MIN_MACOSX, LC_VERSION_MIN_IPHONEOS,
     // LC_VERSION_MIN_WATCHOS, LC_VERSION_MIN_TVOS
     writeVersionMinLoadCommand(_file, _swap, lc);
 
@@ -917,7 +917,7 @@ llvm::Error MachOFileLayout::writeLoadCommands() {
       lc += size;
     }
 
-    // Add LC_VERSION_MIN_MACOSX, LC_VERSION_MIN_IPHONSNAX, LC_VERSION_MIN_WATCHOS,
+    // Add LC_VERSION_MIN_MACOSX, LC_VERSION_MIN_IPHONEOS, LC_VERSION_MIN_WATCHOS,
     // LC_VERSION_MIN_TVOS
     writeVersionMinLoadCommand(_file, _swap, lc);
 

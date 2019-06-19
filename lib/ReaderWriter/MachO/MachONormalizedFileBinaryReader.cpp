@@ -479,7 +479,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       dyldInfo = reinterpret_cast<const dyld_info_command*>(lc);
       break;
     case LC_VERSION_MIN_MACOSX:
-    case LC_VERSION_MIN_IPHONSNAX:
+    case LC_VERSION_MIN_IPHONEOS:
     case LC_VERSION_MIN_WATCHOS:
     case LC_VERSION_MIN_TVOS:
       // If we are emitting an object file, then we may take the load command

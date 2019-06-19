@@ -552,8 +552,8 @@ struct ScalarEnumerationTraits<LoadCommandType> {
                         llvm::MachO::LC_LAZY_LOAD_DYLIB);
     io.enumCase(value, "LC_VERSION_MIN_MACOSX",
                         llvm::MachO::LC_VERSION_MIN_MACOSX);
-    io.enumCase(value, "LC_VERSION_MIN_IPHONSNAX",
-                        llvm::MachO::LC_VERSION_MIN_IPHONSNAX);
+    io.enumCase(value, "LC_VERSION_MIN_IPHONEOS",
+                        llvm::MachO::LC_VERSION_MIN_IPHONEOS);
     io.enumCase(value, "LC_VERSION_MIN_TVOS",
                         llvm::MachO::LC_VERSION_MIN_TVOS);
     io.enumCase(value, "LC_VERSION_MIN_WATCHOS",
