@@ -179,9 +179,9 @@ void ObjFile::parse() {
     }
   }
   
-  eosio_abi     = WasmObj->get_eosio_abi();
-  eosio_actions = WasmObj->actions();
-  eosio_notify  = WasmObj->notify();
+  snax_abi     = WasmObj->get_snax_abi();
+  snax_actions = WasmObj->actions();
+  snax_notify  = WasmObj->notify();
 
   // Find the code and data sections.  Wasm objects can have at most one code
   // and one data section.
